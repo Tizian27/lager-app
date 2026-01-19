@@ -316,7 +316,9 @@ async function adjust(itemId, delta){
 
 /* ---------- PDF Export ---------- */
 function exportPdf(){
-  const items = filteredItems().sort((a,b) => (a.name || "").localeCompare(b.name || ""));
+  const items = filteredItems().sort((a,b) =>
+    (a.name || "").localeCompare(b.name || "")
+  );
 
   const rows = items.map((it) => `
     <tr>
@@ -334,13 +336,16 @@ function exportPdf(){
             <th class="right">Anzahl</th>
           </tr>
         </thead>
-        <tbody>${rows}</tbody>
+        <tbody>
+          ${rows}
+        </tbody>
       </table>
     `;
   }
 
   window.print();
 }
+
 
 
 /* ---------- Backup / Restore ---------- */
