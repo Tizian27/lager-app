@@ -317,8 +317,6 @@ async function adjust(itemId, delta){
 /* ---------- PDF Export ---------- */
 function exportPdf(){
   const items = filteredItems().sort((a,b) => (a.name || "").localeCompare(b.name || ""));
-  const now = new Date();
-  const dateStr = fmtDateTime(now);
 
   const rows = items.map((it) => `
     <tr>
@@ -329,8 +327,6 @@ function exportPdf(){
 
   if (printArea) {
     printArea.innerHTML = `
-      <h1>Lagerbestand</h1>
-      <div class="meta">Export: ${escapeHtml(dateStr)} | Artikel: ${items.length}</div>
       <table>
         <thead>
           <tr>
@@ -345,6 +341,7 @@ function exportPdf(){
 
   window.print();
 }
+
 
 /* ---------- Backup / Restore ---------- */
 async function doBackup(){
