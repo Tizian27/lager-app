@@ -225,3 +225,9 @@ body{
 }
 .printArea th{ background:#eee; text-align:left; }
 .printArea .right{ text-align:right; }
+
+.stockBig{
+  font-size: 20px;
+  font-weight: 800;
+}
+
