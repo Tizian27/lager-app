@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#0aa" />
+  <title>Lagerbestand</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">LB</div>
+      <div>
+        <div class="title">Lagerbestand</div>
+        <div class="subtitle" id="statusText">Offline bereit</div>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <button id="btnExportPdf" class="btn">PDF Export</button>
+      <button id="btnBackup" class="btn btnSecondary">Backup</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <div class="cardHeader">
+        <h2>Artikel</h2>
+        <div class="row gap">
+          <input id="searchInput" class="input" placeholder="Suche nach Name, SKU, Kategorie" />
+          <button id="btnNewItem" class="btn btnPrimary">Neuer Artikel</button>
+        </div>
+      </div>
+
+      <div class="tableWrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>SKU</th>
+              <th>Kategorie</th>
+              <th class="right">Bestand</th>
+              <th class="right">Aktionen</th>
+            </tr>
+          </thead>
+          <tbody id="itemsTbody"></tbody>
+        </table>
+      </div>
+
+      <div class="hint" id="emptyHint" hidden>
+        Noch keine Artikel. Klick auf "Neuer Artikel".
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="cardHeader">
+        <h2>Letzte Buchungen</h2>
+        <div class="muted">Plus und Minus Änderungen am Bestand</div>
+      </div>
+      <div class="tableWrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Zeit</th>
+              <th>Artikel</th>
+              <th class="right">Delta</th>
+              <th>Grund</th>
+              <th>Notiz</th>
+            </tr>
+          </thead>
+          <tbody id="txTbody"></tbody>
+        </table>
+      </div>
+      <div class="hint" id="txEmptyHint" hidden>
+        Noch keine Buchungen.
+      </div>
+    </section>
+  </main>
+
+  <!-- Dialog: Artikel anlegen oder bearbeiten -->
+  <dialog id="itemDialog" class="dialog">
+    <form method="dialog" class="dialogForm" id="itemForm">
+      <div class="dialogHeader">
+        <h3 id="itemDialogTitle">Neuer Artikel</h3>
+        <button class="iconBtn" value="cancel" aria-label="Schließen">✕</button>
+      </div>
+
+      <div class="grid2">
+        <label class="field">
+          <span>Name</span>
+          <input id="itemName" class="input" required maxlength="80" />
+        </label>
+
+        <label class="field">
+          <span>SKU (optional)</span>
+          <input id="itemSku" class="input" maxlength="40" />
+        </label>
+
+        <label class="field">
+          <span>Kategorie (optional)</span>
+          <input id="itemCategory" class="input" maxlength="40" />
+        </label>
+
+        <label class="field">
+          <span>Einheit (optional)</span>
+          <input id="itemUnit" class="input" maxlength="20" placeholder="Stk, kg, l ..." />
+        </label>
+
+        <label class="field">
+          <span>Startbestand</span>
+          <input id="itemStock" class="input" type="number" inputmode="numeric" step="1" value="0" />
+        </label>
+      </div>
+
+      <div class="dialogActions">
+        <button class="btn btnSecondary" value="cancel">Abbrechen</button>
+        <button class="btn btnPrimary" id="btnSaveItem" value="default">Speichern</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Dialog: Bestand buchen -->
+  <dialog id="adjustDialog" class="dialog">
+    <form method="dialog" class="dialogForm" id="adjustForm">
+      <div class="dialogHeader">
+        <h3 id="adjustTitle">Bestand ändern</h3>
+        <button class="iconBtn" value="cancel" aria-label="Schließen">✕</button>
+      </div>
+
+      <div class="grid2">
+        <label class="field">
+          <span>Delta (zB 5 oder -2)</span>
+          <input id="adjustDelta" class="input" type="number" inputmode="numeric" step="1" required />
+        </label>
+
+        <label class="field">
+          <span>Grund (optional)</span>
+          <input id="adjustReason" class="input" maxlength="60" placeholder="Einkauf, Verkauf, Inventur ..." />
+        </label>
+
+        <label class="field full">
+          <span>Notiz (optional)</span>
+          <input id="adjustNote" class="input" maxlength="120" placeholder="Kurz notieren, was passiert ist" />
+        </label>
+      </div>
+
+      <div class="dialogActions">
+        <button class="btn btnSecondary" value="cancel">Abbrechen</button>
+        <button class="btn btnPrimary" id="btnApplyAdjust" value="default">Buchen</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Dialog: Backup -->
+  <dialog id="backupDialog" class="dialog">
+    <form method="dialog" class="dialogForm">
+      <div class="dialogHeader">
+        <h3>Backup und Restore</h3>
+        <button class="iconBtn" value="cancel" aria-label="Schließen">✕</button>
+      </div>
+
+      <div class="backupGrid">
+        <div class="box">
+          <h4>Backup exportieren</h4>
+          <p class="muted">Speichert alle Artikel und Buchungen als JSON Datei.</p>
+          <button id="btnDoBackup" class="btn btnPrimary" value="cancel">Backup herunterladen</button>
+        </div>
+
+        <div class="box">
+          <h4>Backup importieren</h4>
+          <p class="muted">Ersetzt den aktuellen Stand komplett durch die Datei.</p>
+          <input id="backupFile" type="file" accept="application/json" class="input" />
+          <button id="btnDoRestore" class="btn btnSecondary" value="cancel">Import starten</button>
+        </div>
+      </div>
+
+      <div class="dialogActions">
+        <button class="btn btnSecondary" value="cancel">Schließen</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Druckbereich -->
+  <div id="printArea" class="printArea" aria-hidden="true"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
